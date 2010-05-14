@@ -1,0 +1,504 @@
+*** jquery.toChecklist.js	2009-10-27 15:40:46.000000000 +0200
+--- jquery.checklist.js	2010-05-15 00:44:09.000000000 +0300
+***************
+*** 26,47 ****
+  	// Since o can be a string instead of an object, we need a function that
+  	// will handle the action requested when o is a string (e.g. 'clearAll')
+  	var updateChecklist = function(action,checklistElem) {
+! 					
+  		// Before we operate on all checkboxes, we need to make sure that
+  		// showSelectedItems is disabled, at least temporarily. Otherwise,
+  		// this process will be REALLY slow because it tries to update the
+  		// DOM a thousand times unnecessarily.
+  		// (We will only do this if the list is greater than 3 items.)
+! 		
+  		var showSelectedItemsSetting;
+! 		
+  		var disableDynamicList = function(checklistLength) {
+  			if (checklistLength > 3) {
+  				showSelectedItemsSetting = $(checklistElem).attr('showSelectedItems');
+  				$(checklistElem).attr('showSelectedItems', 'false');
+  			}
+  		}
+! 		
+  		var enableDynamicList = function() {
+  			$(checklistElem).attr('showSelectedItems', showSelectedItemsSetting);
+  		}
+--- 26,47 ----
+  	// Since o can be a string instead of an object, we need a function that
+  	// will handle the action requested when o is a string (e.g. 'clearAll')
+  	var updateChecklist = function(action,checklistElem) {
+! 
+  		// Before we operate on all checkboxes, we need to make sure that
+  		// showSelectedItems is disabled, at least temporarily. Otherwise,
+  		// this process will be REALLY slow because it tries to update the
+  		// DOM a thousand times unnecessarily.
+  		// (We will only do this if the list is greater than 3 items.)
+! 
+  		var showSelectedItemsSetting;
+! 
+  		var disableDynamicList = function(checklistLength) {
+  			if (checklistLength > 3) {
+  				showSelectedItemsSetting = $(checklistElem).attr('showSelectedItems');
+  				$(checklistElem).attr('showSelectedItems', 'false');
+  			}
+  		}
+! 
+  		var enableDynamicList = function() {
+  			$(checklistElem).attr('showSelectedItems', showSelectedItemsSetting);
+  		}
+***************
+*** 80,86 ****
+  
+  
+  	};
+! 	
+  	// If o is a simple string, then we're updating an existing checklist
+  	// (i.e. 'checkAll') instead of converting a regular multi-SELECT box.
+  	if (typeof o == 'string') {
+--- 80,86 ----
+  
+  
+  	};
+! 
+  	// If o is a simple string, then we're updating an existing checklist
+  	// (i.e. 'checkAll') instead of converting a regular multi-SELECT box.
+  	if (typeof o == 'string') {
+***************
+*** 100,105 ****
+--- 100,108 ----
+  		searchBoxText : 'Type here to search list...',
+  		showCheckboxes : true,
+  		showSelectedItems : false,
++ 		overwriteName : false , // Use false when you need to use original name attribute
++                               	// or use true if you want to overwrite original name attribute,
++                               	// very important for Ruby on Rails support to use original name attribute!
+  		submitDataAsArray : true, // This one allows compatibility with languages that use arrays
+  		                          // to process the form data, such as PHP. Set to false if using
+  		                          // ColdFusion or anything else with a list-based approach.
+***************
+*** 109,117 ****
+  		                         // it compatible with Drupal's Views module, among other things.)
+  		maxNumOfSelections : -1, // If you want to limit the number of items a user can select in a
+  		                         // checklist, set this to a positive integer.
+! 		                         
+  		// This function gets executed whenever you go over the max number of allowable selections.
+! 		onMaxNumExceeded : function() { 
+  			alert('You cannot select more than '+this.maxNumOfSelections+' items in this list.');
+  		},
+  
+--- 112,120 ----
+  		                         // it compatible with Drupal's Views module, among other things.)
+  		maxNumOfSelections : -1, // If you want to limit the number of items a user can select in a
+  		                         // checklist, set this to a positive integer.
+! 
+  		// This function gets executed whenever you go over the max number of allowable selections.
+! 		onMaxNumExceeded : function() {
+  			alert('You cannot select more than '+this.maxNumOfSelections+' items in this list.');
+  		},
+  
+***************
+*** 135,141 ****
+  	var error = function(msg) {
+  		alert("jQuery Plugin Error (Plugin: toChecklist)\n\n"+msg);
+  	}
+! 	
+  	var overflowProperty = (o.addScrollBar)? 'overflow-y: auto; overflow-x: hidden;' : '';
+  	var leaveRoomForCheckbox = (o.showCheckboxes)? 'padding-left: 25px' : 'padding-left: 3px';
+  
+--- 138,144 ----
+  	var error = function(msg) {
+  		alert("jQuery Plugin Error (Plugin: toChecklist)\n\n"+msg);
+  	}
+! 
+  	var overflowProperty = (o.addScrollBar)? 'overflow-y: auto; overflow-x: hidden;' : '';
+  	var leaveRoomForCheckbox = (o.showCheckboxes)? 'padding-left: 25px' : 'padding-left: 3px';
+  
+***************
+*** 147,152 ****
+--- 150,156 ----
+  
+  		// Hang on to the important information about this <select> element.
+  		var jSelectElem = $(this);
++ 		var jSelectElemName = jSelectElem.attr('name');
+  		var jSelectElemId = jSelectElem.attr('id');
+  		if (jSelectElemId == '' || !o.preferIdOverName) {
+  			// Regardless of whether this is a PHP environment, we need an id
+***************
+*** 173,179 ****
+  		} else if (this.type == 'select-one') {
+  			return $;
+  		}
+! 		
+  		var convertListItemsToCheckboxes = function() {
+  			var checkboxValue = $(this).attr('value');
+  			// The option tag may not have had a "value" attribute set. In this case,
+--- 177,183 ----
+  		} else if (this.type == 'select-one') {
+  			return $;
+  		}
+! 
+  		var convertListItemsToCheckboxes = function() {
+  			var checkboxValue = $(this).attr('value');
+  			// The option tag may not have had a "value" attribute set. In this case,
+***************
+*** 183,189 ****
+  				checkboxValue = this.innerHTML;
+  			}
+  			checkboxValue = checkboxValue.replace(/ /g,'_');
+! 			
+  			var checkboxId = jSelectElemId+'_'+checkboxValue;
+  			var labelText = $(this).attr('innerHTML');
+  			var selected = '';
+--- 187,194 ----
+  				checkboxValue = this.innerHTML;
+  			}
+  			checkboxValue = checkboxValue.replace(/ /g,'_');
+! 
+!       
+  			var checkboxId = jSelectElemId+'_'+checkboxValue;
+  			var labelText = $(this).attr('innerHTML');
+  			var selected = '';
+***************
+*** 203,213 ****
+  					}
+  				}
+  			}
+! 			
+  			var arrayBrackets = (o.submitDataAsArray)? '[]' : '';
+  
+  			$(this).replaceWith('<li tabindex="0"><input type="checkbox" value="'+checkboxValue
+! 				+'" name="'+jSelectElemId+arrayBrackets+'" id="'+checkboxId+'" ' + selected + disabled
+  				+' /><label for="'+checkboxId+'"'+disabledClass+'>'+labelText+'</label></li>');
+  			// Hide the checkboxes.
+  			if (o.showCheckboxes === false) {
+--- 208,219 ----
+  					}
+  				}
+  			}
+! 
+  			var arrayBrackets = (o.submitDataAsArray)? '[]' : '';
++ 			var checkboxName = (o.overwriteName)? jSelectElemId+arrayBrackets : jSelectElemName;
+  
+  			$(this).replaceWith('<li tabindex="0"><input type="checkbox" value="'+checkboxValue
+! 				+'" name="'+checkboxName+'" id="'+checkboxId+'" ' + selected + disabled
+  				+' /><label for="'+checkboxId+'"'+disabledClass+'>'+labelText+'</label></li>');
+  			// Hide the checkboxes.
+  			if (o.showCheckboxes === false) {
+***************
+*** 215,221 ****
+  				// to hide the checkboxes off screen to the left.
+  				$('#'+checkboxId).css('position','absolute').css('left','-50000px');
+  			} else {
+! 				$('label[for='+checkboxId+']').addClass(o.cssLeaveRoomForCheckbox);	
+  			}
+  		};
+  
+--- 221,227 ----
+  				// to hide the checkboxes off screen to the left.
+  				$('#'+checkboxId).css('position','absolute').css('left','-50000px');
+  			} else {
+! 				$('label[for='+checkboxId+']').addClass(o.cssLeaveRoomForCheckbox);
+  			}
+  		};
+  
+***************
+*** 226,232 ****
+  		});
+  
+  		// Loop through all remaining options (not in optgroups) and convert them to li's
+! 		// with checkboxes and labels.		
+  		$('option',jSelectElem).each(convertListItemsToCheckboxes);
+  
+  		// If the first list item in the checklist is an optgroup label, we want
+--- 232,238 ----
+  		});
+  
+  		// Loop through all remaining options (not in optgroups) and convert them to li's
+! 		// with checkboxes and labels.
+  		$('option',jSelectElem).each(convertListItemsToCheckboxes);
+  
+  		// If the first list item in the checklist is an optgroup label, we want
+***************
+*** 236,242 ****
+  				$(this).css('border-top','none');
+  		});
+  
+! 		
+  		var checklistId = jSelectElemId+'_'+'checklist';
+  
+  		// Convert the outer SELECT elem to a <div>
+--- 242,248 ----
+  				$(this).css('border-top','none');
+  		});
+  
+! 
+  		var checklistId = jSelectElemId+'_'+'checklist';
+  
+  		// Convert the outer SELECT elem to a <div>
+***************
+*** 253,259 ****
+  		// after the initial conversion in order to make it faster to check/uncheck every
+  		// item in the list.
+  		$('#'+jSelectElemId).attr('showSelectedItems',o.showSelectedItems.toString());
+! 		
+  		// We MUST set the checklist div's position to either 'relative' or 'absolute'
+  		// (default is 'static'), or else Firefox will think the offsetParent of the inner
+  		// elements is BODY instead of DIV.
+--- 259,265 ----
+  		// after the initial conversion in order to make it faster to check/uncheck every
+  		// item in the list.
+  		$('#'+jSelectElemId).attr('showSelectedItems',o.showSelectedItems.toString());
+! 
+  		// We MUST set the checklist div's position to either 'relative' or 'absolute'
+  		// (default is 'static'), or else Firefox will think the offsetParent of the inner
+  		// elements is BODY instead of DIV.
+***************
+*** 262,268 ****
+  		// Add the findInList div, if settings call for it.
+  		var findInListDivHeight = 0;
+  		if (o.addSearchBox) {
+! 			
+  			var focusSearchBox = function() {
+  				// Remove "type to find..." when focusing.
+  				this.value = "";
+--- 268,274 ----
+  		// Add the findInList div, if settings call for it.
+  		var findInListDivHeight = 0;
+  		if (o.addSearchBox) {
+! 
+  			var focusSearchBox = function() {
+  				// Remove "type to find..." when focusing.
+  				this.value = "";
+***************
+*** 297,303 ****
+  					if ( !$(this).is(':disabled') ) {
+  						var curItem = $(this).html().toLowerCase();
+  						var typedText = textbox.value.toLowerCase();
+! 						
+  						if ( curItem.indexOf(typedText) == 0 ) { // If the label text begins
+  						                                         // with the text typed by user...
+  							var curLabelObj = this;
+--- 303,309 ----
+  					if ( !$(this).is(':disabled') ) {
+  						var curItem = $(this).html().toLowerCase();
+  						var typedText = textbox.value.toLowerCase();
+! 
+  						if ( curItem.indexOf(typedText) == 0 ) { // If the label text begins
+  						                                         // with the text typed by user...
+  							var curLabelObj = this;
+***************
+*** 336,342 ****
+  					}
+  				});
+  				return;
+! 			
+  			});
+  
+  			// Compensate for the extra space the search box takes up by shortening the
+--- 342,348 ----
+  					}
+  				});
+  				return;
+! 
+  			});
+  
+  			// Compensate for the extra space the search box takes up by shortening the
+***************
+*** 366,383 ****
+  		});/*.mouseout(function() {
+  			$(this).removeClass(o.cssFocused);
+  		});*/
+! 			
+  		// Highlight preselected ones.
+  		$('li',checklistDivId).each(function() {
+  			if ($('input',this).attr('checked')) {
+! 				$(this).addClass(o.cssChecked);	
+  			}
+  		});
+  
+  		// ============ Event handlers ===========
+  
+  		var toggleDivGlow = function() {
+! 			// Make sure the div is glowing if something is checked in it.			
+  			if ($('li',checklistDivId).hasClass(o.cssChecked)) {
+  				$(checklistDivId).addClass(o.cssChecklistHighlighted);
+  			} else {
+--- 372,389 ----
+  		});/*.mouseout(function() {
+  			$(this).removeClass(o.cssFocused);
+  		});*/
+! 
+  		// Highlight preselected ones.
+  		$('li',checklistDivId).each(function() {
+  			if ($('input',this).attr('checked')) {
+! 				$(this).addClass(o.cssChecked);
+  			}
+  		});
+  
+  		// ============ Event handlers ===========
+  
+  		var toggleDivGlow = function() {
+! 			// Make sure the div is glowing if something is checked in it.
+  			if ($('li',checklistDivId).hasClass(o.cssChecked)) {
+  				$(checklistDivId).addClass(o.cssChecklistHighlighted);
+  			} else {
+***************
+*** 398,404 ****
+  
+  		// Check/uncheck boxes
+  		var check = function(event) {
+! 						
+  			// This needs to be keyboard accessible too. Only check the box if the user
+  			// presses space (enter typically submits a form, so is not safe).
+  			if (event.type == 'keydown') {
+--- 404,410 ----
+  
+  		// Check/uncheck boxes
+  		var check = function(event) {
+! 
+  			// This needs to be keyboard accessible too. Only check the box if the user
+  			// presses space (enter typically submits a form, so is not safe).
+  			if (event.type == 'keydown') {
+***************
+*** 428,439 ****
+  
+  					o.onMaxNumExceeded();
+  
+! 					event.preventDefault();				
+  					return;
+  			}
+  
+  			// Not sure if unbind() here removes default action, but that's what I want.
+! 			$('label',this).unbind(); 
+  			// Make sure that the event handler isn't triggered twice (thus preventing the user
+  			// from actually checking the box) if clicking directly on checkbox or label.
+  			// Note: the && is not a mistake here. It should not be ||
+--- 434,445 ----
+  
+  					o.onMaxNumExceeded();
+  
+! 					event.preventDefault();
+  					return;
+  			}
+  
+  			// Not sure if unbind() here removes default action, but that's what I want.
+! 			$('label',this).unbind();
+  			// Make sure that the event handler isn't triggered twice (thus preventing the user
+  			// from actually checking the box) if clicking directly on checkbox or label.
+  			// Note: the && is not a mistake here. It should not be ||
+***************
+*** 444,457 ****
+  			// Change the styling of the row to be checked or unchecked.
+  			var checkbox = $('input',this).get(0);
+  			updateLIStyleToMatchCheckedStatus(checkbox);
+! 			
+  			// The showSelectedItems setting can change after the initial conversion to
+  			// a checklist, so rather than checking o.showSelectedItems, we check the
+  			// value of the custom HTML attribute on the main containing div.
+  			if ($('#'+jSelectElemId).attr('showSelectedItems') === 'true') showSelectedItems();
+  
+  		};
+! 		
+  		var updateLIStyleToMatchCheckedStatus = function(checkbox) {
+  			if (checkbox.checked) {
+  				$(checkbox).parent().addClass(o.cssChecked);
+--- 450,463 ----
+  			// Change the styling of the row to be checked or unchecked.
+  			var checkbox = $('input',this).get(0);
+  			updateLIStyleToMatchCheckedStatus(checkbox);
+! 
+  			// The showSelectedItems setting can change after the initial conversion to
+  			// a checklist, so rather than checking o.showSelectedItems, we check the
+  			// value of the custom HTML attribute on the main containing div.
+  			if ($('#'+jSelectElemId).attr('showSelectedItems') === 'true') showSelectedItems();
+  
+  		};
+! 
+  		var updateLIStyleToMatchCheckedStatus = function(checkbox) {
+  			if (checkbox.checked) {
+  				$(checkbox).parent().addClass(o.cssChecked);
+***************
+*** 460,466 ****
+  			}
+  			toggleDivGlow();
+  		}
+! 		
+  		// Accessibility, primarily for IE
+  		var handFocusToLI = function() {
+  			// Make sure that labels and checkboxes that receive
+--- 466,472 ----
+  			}
+  			toggleDivGlow();
+  		}
+! 
+  		// Accessibility, primarily for IE
+  		var handFocusToLI = function() {
+  			// Make sure that labels and checkboxes that receive
+***************
+*** 483,491 ****
+  			}).parent();
+  		}
+  		$('form:has(div.'+o.cssChecklist+')').bind('reset.fixFormElems',fixFormElems);
+! 		
+  		// ================== List the selected items in a UL ==========================
+! 		
+  		var selectedItemsListId = '#'+jSelectElemId + '_selectedItems';
+  		if (o.showSelectedItems) {
+  			$(selectedItemsListId).addClass(o.cssShowSelectedItems);
+--- 489,497 ----
+  			}).parent();
+  		}
+  		$('form:has(div.'+o.cssChecklist+')').bind('reset.fixFormElems',fixFormElems);
+! 
+  		// ================== List the selected items in a UL ==========================
+! 
+  		var selectedItemsListId = '#'+jSelectElemId + '_selectedItems';
+  		if (o.showSelectedItems) {
+  			$(selectedItemsListId).addClass(o.cssShowSelectedItems);
+***************
+*** 502,508 ****
+  				}
+  			});
+  		};
+! 		
+  		// We have to run showSelectedItems() once here too, upon initial conversion.
+  		if (o.showSelectedItems) showSelectedItems();
+  
+--- 508,514 ----
+  				}
+  			});
+  		};
+! 
+  		// We have to run showSelectedItems() once here too, upon initial conversion.
+  		if (o.showSelectedItems) showSelectedItems();
+  
+***************
+*** 514,520 ****
+  jQuery.fn.isChecklist = function() {
+  	var isChecklist = false; // Innocent until proven guilty...
+  	this.each(function() {
+! 		var divContainsChecklist = $('#'+this.id+'_checklist',this).get();	
+  		isChecklist = (this.tagName == 'DIV' && divContainsChecklist);
+  		return false; // same as "break"
+  	});
+--- 520,526 ----
+  jQuery.fn.isChecklist = function() {
+  	var isChecklist = false; // Innocent until proven guilty...
+  	this.each(function() {
+! 		var divContainsChecklist = $('#'+this.id+'_checklist',this).get();
+  		isChecklist = (this.tagName == 'DIV' && divContainsChecklist);
+  		return false; // same as "break"
+  	});
+***************
+*** 523,526 ****
+  	return (isChecklist)? true : false;
+  };
+  
+! })(jQuery);
+\ No newline at end of file
+--- 529,532 ----
+  	return (isChecklist)? true : false;
+  };
+  
+! })(jQuery);

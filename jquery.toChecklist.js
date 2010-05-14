@@ -26,22 +26,22 @@ jQuery.fn.toChecklist = function(o) { // "o" stands for options
 	// Since o can be a string instead of an object, we need a function that
 	// will handle the action requested when o is a string (e.g. 'clearAll')
 	var updateChecklist = function(action,checklistElem) {
-					
+
 		// Before we operate on all checkboxes, we need to make sure that
 		// showSelectedItems is disabled, at least temporarily. Otherwise,
 		// this process will be REALLY slow because it tries to update the
 		// DOM a thousand times unnecessarily.
 		// (We will only do this if the list is greater than 3 items.)
-		
+
 		var showSelectedItemsSetting;
-		
+
 		var disableDynamicList = function(checklistLength) {
 			if (checklistLength > 3) {
 				showSelectedItemsSetting = $(checklistElem).attr('showSelectedItems');
 				$(checklistElem).attr('showSelectedItems', 'false');
 			}
 		}
-		
+
 		var enableDynamicList = function() {
 			$(checklistElem).attr('showSelectedItems', showSelectedItemsSetting);
 		}
@@ -80,7 +80,7 @@ jQuery.fn.toChecklist = function(o) { // "o" stands for options
 
 
 	};
-	
+
 	// If o is a simple string, then we're updating an existing checklist
 	// (i.e. 'checkAll') instead of converting a regular multi-SELECT box.
 	if (typeof o == 'string') {
@@ -100,6 +100,9 @@ jQuery.fn.toChecklist = function(o) { // "o" stands for options
 		searchBoxText : 'Type here to search list...',
 		showCheckboxes : true,
 		showSelectedItems : false,
+		overwriteName : false , // Use false when you need to use original name attribute
+                              	// or use true if you want to overwrite original name attribute,
+                              	// very important for Ruby on Rails support to use original name attribute!
 		submitDataAsArray : true, // This one allows compatibility with languages that use arrays
 		                          // to process the form data, such as PHP. Set to false if using
 		                          // ColdFusion or anything else with a list-based approach.
@@ -109,9 +112,9 @@ jQuery.fn.toChecklist = function(o) { // "o" stands for options
 		                         // it compatible with Drupal's Views module, among other things.)
 		maxNumOfSelections : -1, // If you want to limit the number of items a user can select in a
 		                         // checklist, set this to a positive integer.
-		                         
+
 		// This function gets executed whenever you go over the max number of allowable selections.
-		onMaxNumExceeded : function() { 
+		onMaxNumExceeded : function() {
 			alert('You cannot select more than '+this.maxNumOfSelections+' items in this list.');
 		},
 
@@ -135,7 +138,7 @@ jQuery.fn.toChecklist = function(o) { // "o" stands for options
 	var error = function(msg) {
 		alert("jQuery Plugin Error (Plugin: toChecklist)\n\n"+msg);
 	}
-	
+
 	var overflowProperty = (o.addScrollBar)? 'overflow-y: auto; overflow-x: hidden;' : '';
 	var leaveRoomForCheckbox = (o.showCheckboxes)? 'padding-left: 25px' : 'padding-left: 3px';
 
@@ -147,6 +150,7 @@ jQuery.fn.toChecklist = function(o) { // "o" stands for options
 
 		// Hang on to the important information about this <select> element.
 		var jSelectElem = $(this);
+		var jSelectElemName = jSelectElem.attr('name');
 		var jSelectElemId = jSelectElem.attr('id');
 		if (jSelectElemId == '' || !o.preferIdOverName) {
 			// Regardless of whether this is a PHP environment, we need an id
@@ -173,7 +177,7 @@ jQuery.fn.toChecklist = function(o) { // "o" stands for options
 		} else if (this.type == 'select-one') {
 			return $;
 		}
-		
+
 		var convertListItemsToCheckboxes = function() {
 			var checkboxValue = $(this).attr('value');
 			// The option tag may not have had a "value" attribute set. In this case,
@@ -183,7 +187,8 @@ jQuery.fn.toChecklist = function(o) { // "o" stands for options
 				checkboxValue = this.innerHTML;
 			}
 			checkboxValue = checkboxValue.replace(/ /g,'_');
-			
+
+      
 			var checkboxId = jSelectElemId+'_'+checkboxValue;
 			var labelText = $(this).attr('innerHTML');
 			var selected = '';
@@ -203,11 +208,12 @@ jQuery.fn.toChecklist = function(o) { // "o" stands for options
 					}
 				}
 			}
-			
+
 			var arrayBrackets = (o.submitDataAsArray)? '[]' : '';
+			var checkboxName = (o.overwriteName)? jSelectElemId+arrayBrackets : jSelectElemName;
 
 			$(this).replaceWith('<li tabindex="0"><input type="checkbox" value="'+checkboxValue
-				+'" name="'+jSelectElemId+arrayBrackets+'" id="'+checkboxId+'" ' + selected + disabled
+				+'" name="'+checkboxName+'" id="'+checkboxId+'" ' + selected + disabled
 				+' /><label for="'+checkboxId+'"'+disabledClass+'>'+labelText+'</label></li>');
 			// Hide the checkboxes.
 			if (o.showCheckboxes === false) {
@@ -215,7 +221,7 @@ jQuery.fn.toChecklist = function(o) { // "o" stands for options
 				// to hide the checkboxes off screen to the left.
 				$('#'+checkboxId).css('position','absolute').css('left','-50000px');
 			} else {
-				$('label[for='+checkboxId+']').addClass(o.cssLeaveRoomForCheckbox);	
+				$('label[for='+checkboxId+']').addClass(o.cssLeaveRoomForCheckbox);
 			}
 		};
 
@@ -226,7 +232,7 @@ jQuery.fn.toChecklist = function(o) { // "o" stands for options
 		});
 
 		// Loop through all remaining options (not in optgroups) and convert them to li's
-		// with checkboxes and labels.		
+		// with checkboxes and labels.
 		$('option',jSelectElem).each(convertListItemsToCheckboxes);
 
 		// If the first list item in the checklist is an optgroup label, we want
@@ -236,7 +242,7 @@ jQuery.fn.toChecklist = function(o) { // "o" stands for options
 				$(this).css('border-top','none');
 		});
 
-		
+
 		var checklistId = jSelectElemId+'_'+'checklist';
 
 		// Convert the outer SELECT elem to a <div>
@@ -253,7 +259,7 @@ jQuery.fn.toChecklist = function(o) { // "o" stands for options
 		// after the initial conversion in order to make it faster to check/uncheck every
 		// item in the list.
 		$('#'+jSelectElemId).attr('showSelectedItems',o.showSelectedItems.toString());
-		
+
 		// We MUST set the checklist div's position to either 'relative' or 'absolute'
 		// (default is 'static'), or else Firefox will think the offsetParent of the inner
 		// elements is BODY instead of DIV.
@@ -262,7 +268,7 @@ jQuery.fn.toChecklist = function(o) { // "o" stands for options
 		// Add the findInList div, if settings call for it.
 		var findInListDivHeight = 0;
 		if (o.addSearchBox) {
-			
+
 			var focusSearchBox = function() {
 				// Remove "type to find..." when focusing.
 				this.value = "";
@@ -297,7 +303,7 @@ jQuery.fn.toChecklist = function(o) { // "o" stands for options
 					if ( !$(this).is(':disabled') ) {
 						var curItem = $(this).html().toLowerCase();
 						var typedText = textbox.value.toLowerCase();
-						
+
 						if ( curItem.indexOf(typedText) == 0 ) { // If the label text begins
 						                                         // with the text typed by user...
 							var curLabelObj = this;
@@ -336,7 +342,7 @@ jQuery.fn.toChecklist = function(o) { // "o" stands for options
 					}
 				});
 				return;
-			
+
 			});
 
 			// Compensate for the extra space the search box takes up by shortening the
@@ -366,18 +372,18 @@ jQuery.fn.toChecklist = function(o) { // "o" stands for options
 		});/*.mouseout(function() {
 			$(this).removeClass(o.cssFocused);
 		});*/
-			
+
 		// Highlight preselected ones.
 		$('li',checklistDivId).each(function() {
 			if ($('input',this).attr('checked')) {
-				$(this).addClass(o.cssChecked);	
+				$(this).addClass(o.cssChecked);
 			}
 		});
 
 		// ============ Event handlers ===========
 
 		var toggleDivGlow = function() {
-			// Make sure the div is glowing if something is checked in it.			
+			// Make sure the div is glowing if something is checked in it.
 			if ($('li',checklistDivId).hasClass(o.cssChecked)) {
 				$(checklistDivId).addClass(o.cssChecklistHighlighted);
 			} else {
@@ -398,7 +404,7 @@ jQuery.fn.toChecklist = function(o) { // "o" stands for options
 
 		// Check/uncheck boxes
 		var check = function(event) {
-						
+
 			// This needs to be keyboard accessible too. Only check the box if the user
 			// presses space (enter typically submits a form, so is not safe).
 			if (event.type == 'keydown') {
@@ -428,12 +434,12 @@ jQuery.fn.toChecklist = function(o) { // "o" stands for options
 
 					o.onMaxNumExceeded();
 
-					event.preventDefault();				
+					event.preventDefault();
 					return;
 			}
 
 			// Not sure if unbind() here removes default action, but that's what I want.
-			$('label',this).unbind(); 
+			$('label',this).unbind();
 			// Make sure that the event handler isn't triggered twice (thus preventing the user
 			// from actually checking the box) if clicking directly on checkbox or label.
 			// Note: the && is not a mistake here. It should not be ||
@@ -444,14 +450,14 @@ jQuery.fn.toChecklist = function(o) { // "o" stands for options
 			// Change the styling of the row to be checked or unchecked.
 			var checkbox = $('input',this).get(0);
 			updateLIStyleToMatchCheckedStatus(checkbox);
-			
+
 			// The showSelectedItems setting can change after the initial conversion to
 			// a checklist, so rather than checking o.showSelectedItems, we check the
 			// value of the custom HTML attribute on the main containing div.
 			if ($('#'+jSelectElemId).attr('showSelectedItems') === 'true') showSelectedItems();
 
 		};
-		
+
 		var updateLIStyleToMatchCheckedStatus = function(checkbox) {
 			if (checkbox.checked) {
 				$(checkbox).parent().addClass(o.cssChecked);
@@ -460,7 +466,7 @@ jQuery.fn.toChecklist = function(o) { // "o" stands for options
 			}
 			toggleDivGlow();
 		}
-		
+
 		// Accessibility, primarily for IE
 		var handFocusToLI = function() {
 			// Make sure that labels and checkboxes that receive
@@ -483,9 +489,9 @@ jQuery.fn.toChecklist = function(o) { // "o" stands for options
 			}).parent();
 		}
 		$('form:has(div.'+o.cssChecklist+')').bind('reset.fixFormElems',fixFormElems);
-		
+
 		// ================== List the selected items in a UL ==========================
-		
+
 		var selectedItemsListId = '#'+jSelectElemId + '_selectedItems';
 		if (o.showSelectedItems) {
 			$(selectedItemsListId).addClass(o.cssShowSelectedItems);
@@ -502,7 +508,7 @@ jQuery.fn.toChecklist = function(o) { // "o" stands for options
 				}
 			});
 		};
-		
+
 		// We have to run showSelectedItems() once here too, upon initial conversion.
 		if (o.showSelectedItems) showSelectedItems();
 
@@ -514,7 +520,7 @@ jQuery.fn.toChecklist = function(o) { // "o" stands for options
 jQuery.fn.isChecklist = function() {
 	var isChecklist = false; // Innocent until proven guilty...
 	this.each(function() {
-		var divContainsChecklist = $('#'+this.id+'_checklist',this).get();	
+		var divContainsChecklist = $('#'+this.id+'_checklist',this).get();
 		isChecklist = (this.tagName == 'DIV' && divContainsChecklist);
 		return false; // same as "break"
 	});
